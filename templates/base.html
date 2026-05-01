@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>ERP AutoCenter</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f8f9fb;
+            color: #111827;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 240px;
+            background: #ffffff;
+            padding: 20px 14px;
+            border-right: 1px solid #e5e7eb;
+            box-sizing: border-box;
+        }
+
+        .sidebar h2 {
+            margin: 0 0 6px 0;
+            font-size: 22px;
+            font-weight: 800;
+            color: #111827;
+        }
+
+        .sidebar small {
+            display: block;
+            color: #667085;
+            font-size: 15px;
+            margin-bottom: 34px;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            text-decoration: none;
+            color: #344054;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        .menu a:hover {
+            background: #f1f5f9;
+        }
+
+        .menu a.active {
+            background: #eaf2ff;
+            color: #0057ff;
+        }
+
+        .icon {
+            width: 20px;
+            display: inline-flex;
+            justify-content: center;
+        }
+
+        .content {
+            flex: 1;
+            padding: 28px 32px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <aside class="sidebar">
+        <h2>ERP AutoCenter</h2>
+        <small>Gestão de Veículos</small>
+
+        <nav class="menu">
+            <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <span class="icon">▦</span>
+                Dashboard
+            </a>
+
+            <a href="{% url 'cars_list' %}" class="{% if request.resolver_match.url_name == 'cars_list' or request.resolver_match.url_name == 'car_create' %}active{% endif %}">
+                <span class="icon">🚙</span>
+                Carros à Venda
+            </a>
+
+            <a href="{% url 'sold_cars_list' %}" class="{% if request.resolver_match.url_name == 'sold_cars_list' or request.resolver_match.url_name == 'sale_create' %}active{% endif %}">
+                <span class="icon">🛒</span>
+                Carros Vendidos
+            </a>
+
+            <a href="#">
+                <span class="icon">$</span>
+                Financeiro
+            </a>
+
+            <a href="{% url 'documentation_list' %}" class="{% if request.resolver_match.url_name == 'documentation_list' or request.resolver_match.url_name == 'document_create' %}active{% endif %}">
+                <span class="icon">📄</span>
+                Documentação
+            </a>
+
+            <a href="{% url 'inventory' %}" class="{% if request.resolver_match.url_name == 'inventory' %}active{% endif %}">
+                <span class="icon">📦</span>
+                Estoque
+            </a>
+
+            <a href="{% url 'settings_view' %}" class="{% if request.resolver_match.url_name == 'settings_view' %}active{% endif %}">
+                <span class="icon">⚙</span>
+                Configurações
+            </a>
+        </nav>
+    </aside>
+
+    <main class="content">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+</div>
+
+</body>
+</html>

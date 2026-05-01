@@ -1,0 +1,487 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>Configurações</h1>
+    <p>Gerencie credenciais, acesse ferramentas FIPE e configurações do sistema</p>
+</div>
+
+<div class="tabs">
+    <a href="?tab=credentials" class="{% if active_tab == 'credentials' %}active{% endif %}">
+        Credenciais
+    </a>
+
+    <a href="?tab=fipe" class="{% if active_tab == 'fipe' %}active{% endif %}">
+        Tabela FIPE
+    </a>
+
+    <a href="?tab=security" class="{% if active_tab == 'security' %}active{% endif %}">
+        Segurança
+    </a>
+</div>
+
+{% if message %}
+    <div class="message success">{{ message }}</div>
+{% endif %}
+
+{% if error %}
+    <div class="message error">{{ error }}</div>
+{% endif %}
+
+{% if active_tab == 'credentials' %}
+
+<section class="card">
+    <h2>🔒 Credenciais do Itaú Protegidas</h2>
+
+    {% if not has_password %}
+        <div class="warning-box">
+            <h3>Crie uma senha de proteção</h3>
+            <p>Antes de salvar as credenciais do Itaú, defina uma senha de acesso.</p>
+
+            <form method="post" class="center-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_access_password">
+
+                {{ access_form.new_password }}
+
+                <button type="submit" class="primary-button">
+                    Criar Senha
+                </button>
+            </form>
+        </div>
+
+    {% elif not has_credentials %}
+        <div class="warning-box">
+            <h3>Credenciais ainda não cadastradas</h3>
+            <p>Informe o e-mail e senha do Itaú uma vez. Eles serão salvos criptografados.</p>
+
+            <form method="post" class="credentials-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_itau_credentials">
+
+                <label>E-mail Itaú</label>
+                {{ credentials_form.itau_email }}
+
+                <label>Senha Itaú</label>
+                {{ credentials_form.itau_password }}
+
+                <button type="submit" class="primary-button">
+                    Salvar Credenciais
+                </button>
+            </form>
+        </div>
+
+    {% elif not unlocked %}
+        <div class="protected-box">
+            <div class="lock-icon">🔒</div>
+
+            <h3>Conteúdo Protegido</h3>
+            <p>Digite a senha para acessar as credenciais do Itaú</p>
+
+            <form method="post" class="center-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="unlock_credentials">
+
+                {{ unlock_form.access_password }}
+
+                <button type="submit" class="primary-button">
+                    Desbloquear
+                </button>
+            </form>
+        </div>
+
+    {% else %}
+        <div class="credentials-visible">
+            <div class="credential-row">
+                <span>E-mail Itaú</span>
+                <strong>{{ decrypted_email }}</strong>
+            </div>
+
+            <div class="credential-row">
+                <span>Senha Itaú</span>
+                <strong>{{ decrypted_password }}</strong>
+            </div>
+
+            <form method="post" style="margin-top: 18px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="lock_credentials">
+
+                <button type="submit" class="secondary-button">
+                    Bloquear novamente
+                </button>
+            </form>
+        </div>
+    {% endif %}
+</section>
+
+{% elif active_tab == 'fipe' %}
+
+<section class="card">
+    <h2>▣ Calculadora de Desvalorização FIPE</h2>
+
+    <div class="field">
+        <label>Código FIPE (Opcional)</label>
+        <input type="text" class="form-control" placeholder="Ex: 004219-1">
+    </div>
+
+    <div class="two-columns">
+        <div class="field">
+            <label>Preço Inicial FIPE (R$)</label>
+            <input type="text" id="settings_fipe_initial" class="form-control" placeholder="50.000,00">
+        </div>
+
+        <div class="field">
+            <label>Preço Atual FIPE (R$)</label>
+            <input type="text" id="settings_fipe_current" class="form-control" placeholder="45.000,00">
+        </div>
+    </div>
+
+    <div class="result-box">
+        <span>Resultado da Desvalorização</span>
+        <strong id="settings_fipe_result">0,00%</strong>
+    </div>
+
+    <a href="https://veiculos.fipe.org.br/" target="_blank" class="fipe-button">
+        Abrir Tabela FIPE Oficial
+    </a>
+</section>
+
+{% elif active_tab == 'security' %}
+
+<section class="card">
+    <h2>🔒 Alterar Senha de Proteção</h2>
+
+    <div class="security-alert">
+        Esta senha protege o acesso às credenciais do Itaú. Guarde-a em local seguro.
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="change_access_password">
+
+        {% if has_password %}
+            <div class="field">
+                <label>Senha Atual</label>
+                {{ change_password_form.current_password }}
+            </div>
+        {% endif %}
+
+        <div class="field">
+            <label>
+                {% if has_password %}
+                    Nova Senha de Proteção
+                {% else %}
+                    Criar Senha de Proteção
+                {% endif %}
+            </label>
+            {{ change_password_form.new_password }}
+        </div>
+
+        <button type="submit" class="primary-button full">
+            {% if has_password %}
+                Alterar Senha
+            {% else %}
+                Criar Senha
+            {% endif %}
+        </button>
+    </form>
+
+    <div class="tips-box">
+        <h3>Dicas de Segurança</h3>
+        <p>• Use uma senha forte com letras, números e símbolos</p>
+        <p>• Não compartilhe suas credenciais</p>
+        <p>• Altere suas senhas periodicamente</p>
+        <p>• As credenciais são armazenadas criptografadas no banco</p>
+    </div>
+</section>
+
+{% endif %}
+
+<style>
+    .page-header {
+        margin-bottom: 32px;
+    }
+
+    .page-header h1 {
+        margin: 0;
+        font-size: 32px;
+        font-weight: 800;
+        color: #111827;
+    }
+
+    .page-header p {
+        margin: 6px 0 0 0;
+        color: #667085;
+        font-size: 17px;
+    }
+
+    .tabs {
+        background: #e9e9ee;
+        border-radius: 14px;
+        padding: 4px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 32px;
+    }
+
+    .tabs a {
+        height: 30px;
+        border-radius: 12px;
+        text-decoration: none;
+        color: #111827;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+    }
+
+    .tabs a.active {
+        background: #ffffff;
+    }
+
+    .card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 24px;
+    }
+
+    .card h2 {
+        margin: 0 0 28px 0;
+        font-size: 18px;
+        font-weight: 500;
+        color: #111827;
+    }
+
+    .warning-box,
+    .protected-box {
+        background: #fffbe6;
+        border: 1px solid #facc15;
+        border-radius: 8px;
+        padding: 28px;
+        text-align: center;
+        color: #92400e;
+    }
+
+    .lock-icon {
+        font-size: 42px;
+        margin-bottom: 12px;
+    }
+
+    .warning-box h3,
+    .protected-box h3 {
+        margin: 0 0 10px 0;
+        font-size: 20px;
+    }
+
+    .warning-box p,
+    .protected-box p {
+        margin: 0 0 18px 0;
+    }
+
+    .center-form {
+        max-width: 320px;
+        margin: 0 auto;
+    }
+
+    .credentials-form {
+        max-width: 520px;
+        margin: 0 auto;
+        text-align: left;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 14px;
+        color: #111827;
+    }
+
+    .form-control,
+    input {
+        width: 100%;
+        height: 36px;
+        border: none;
+        background: #f0f0f2;
+        border-radius: 8px;
+        padding: 0 12px;
+        font-size: 15px;
+        color: #111827;
+        box-sizing: border-box;
+        outline: none;
+        margin-bottom: 14px;
+    }
+
+    .primary-button {
+        width: 100%;
+        height: 36px;
+        background: #050516;
+        color: white;
+        border: none;
+        border-radius: 7px;
+        font-size: 15px;
+        cursor: pointer;
+    }
+
+    .secondary-button {
+        width: 100%;
+        height: 36px;
+        background: white;
+        color: #111827;
+        border: 1px solid #e5e7eb;
+        border-radius: 7px;
+        font-size: 15px;
+        cursor: pointer;
+    }
+
+    .credentials-visible {
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 20px;
+    }
+
+    .credential-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 14px 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .credential-row span {
+        color: #667085;
+    }
+
+    .credential-row strong {
+        color: #111827;
+    }
+
+    .message {
+        padding: 12px 14px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 15px;
+    }
+
+    .message.success {
+        background: #ecfdf3;
+        color: #047857;
+    }
+
+    .message.error {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .two-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .result-box {
+        background: #f0f7ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+        padding: 18px;
+        margin: 10px 0 24px 0;
+    }
+
+    .result-box span {
+        display: block;
+        color: #1d4ed8;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .result-box strong {
+        font-size: 28px;
+        color: #111827;
+    }
+
+    .fipe-button {
+        height: 36px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        color: #111827;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        font-size: 15px;
+    }
+
+    .security-alert {
+        background: #fff7ed;
+        border: 1px solid #fdba74;
+        color: #c2410c;
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 18px;
+        font-size: 15px;
+    }
+
+    .tips-box {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        margin-top: 40px;
+    }
+
+    .tips-box h3 {
+        margin: 0 0 10px 0;
+        font-size: 18px;
+        font-weight: 500;
+    }
+
+    .tips-box p {
+        margin: 6px 0;
+        color: #475467;
+    }
+</style>
+
+<script>
+    function parseBrazilianMoney(value) {
+        if (!value) return 0;
+
+        return parseFloat(
+            value
+                .replace(/\./g, '')
+                .replace(',', '.')
+        ) || 0;
+    }
+
+    const initialInput = document.getElementById('settings_fipe_initial');
+    const currentInput = document.getElementById('settings_fipe_current');
+    const resultOutput = document.getElementById('settings_fipe_result');
+
+    function calculateSettingsFipe() {
+        if (!initialInput || !currentInput || !resultOutput) {
+            return;
+        }
+
+        const initial = parseBrazilianMoney(initialInput.value);
+        const current = parseBrazilianMoney(currentInput.value);
+
+        if (current <= 0) {
+            resultOutput.textContent = '0,00%';
+            return;
+        }
+
+        const depreciation = ((initial - current) / current) * 100;
+
+        resultOutput.textContent = depreciation.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }) + '%';
+    }
+
+    if (initialInput && currentInput) {
+        initialInput.addEventListener('input', calculateSettingsFipe);
+        currentInput.addEventListener('input', calculateSettingsFipe);
+    }
+</script>
+
+{% endblock %}

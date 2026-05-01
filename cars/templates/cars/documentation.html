@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Documentação</h1>
+        <p>Gestão de documentos dos veículos</p>
+    </div>
+
+    <a href="{% url 'document_create' %}" class="primary-action">
+        ⤴ Adicionar Documento
+    </a>
+</div>
+
+<section class="filter-card">
+    <form method="get">
+        <label>Filtrar por Carro</label>
+
+        <select name="car" onchange="this.form.submit()">
+            <option value="">Todos os Carros</option>
+
+            {% for car in cars %}
+                <option value="{{ car.id }}" {% if selected_car == car.id|stringformat:"s" %}selected{% endif %}>
+                    {{ car.brand }} {{ car.model }} - {{ car.plate }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+</section>
+
+<section class="documents-card">
+    {% if documents %}
+        <div class="documents-grid">
+            {% for document in documents %}
+                <div class="document-item">
+                    <div class="document-top">
+                        <div>
+                            <h3>{{ document.name }}</h3>
+                            <p>{{ document.get_document_type_display }} • {{ document.car.brand }} {{ document.car.model }}</p>
+                        </div>
+                    </div>
+
+                    {% if document.notes %}
+                        <p class="document-notes">{{ document.notes }}</p>
+                    {% endif %}
+
+                    {% if document.images.all %}
+                        <div class="image-grid">
+                            {% for image in document.images.all %}
+                                <a href="{{ image.image.url }}" target="_blank">
+                                    <img src="{{ image.image.url }}" alt="{{ document.name }}">
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="no-images">Nenhuma imagem enviada</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📄</div>
+
+            <h2>Nenhum documento registrado</h2>
+
+            <p>Adicione documentos para organizar a documentação dos veículos</p>
+
+            <a href="{% url 'document_create' %}" class="empty-button">
+                Adicionar Primeiro Documento
+            </a>
+        </div>
+    {% endif %}
+</section>
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 32px;
+    }
+
+    .page-header h1 {
+        margin: 0;
+        font-size: 32px;
+        font-weight: 800;
+        color: #111827;
+        letter-spacing: -0.5px;
+    }
+
+    .page-header p {
+        margin: 6px 0 0 0;
+        color: #667085;
+        font-size: 17px;
+    }
+
+    .primary-action {
+        background: #050516;
+        color: white;
+        padding: 10px 16px;
+        border-radius: 7px;
+        text-decoration: none;
+        font-size: 15px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 7px;
+    }
+
+    .filter-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .filter-card label {
+        display: block;
+        font-size: 14px;
+        color: #111827;
+        margin-bottom: 4px;
+    }
+
+    .filter-card select {
+        width: 100%;
+        height: 36px;
+        background: #f0f0f2;
+        border: none;
+        border-radius: 8px;
+        padding: 0 12px;
+        font-size: 15px;
+        outline: none;
+    }
+
+    .documents-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 24px;
+        min-height: 240px;
+    }
+
+    .documents-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 18px;
+    }
+
+    .document-item {
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 16px;
+    }
+
+    .document-item h3 {
+        margin: 0;
+        font-size: 17px;
+        color: #111827;
+    }
+
+    .document-item p {
+        margin: 6px 0 0 0;
+        color: #667085;
+        font-size: 14px;
+    }
+
+    .document-notes {
+        margin-top: 12px !important;
+    }
+
+    .image-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 14px;
+    }
+
+    .image-grid img {
+        width: 100%;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        display: block;
+    }
+
+    .no-images {
+        margin-top: 14px !important;
+        font-size: 14px;
+        color: #98a2b3 !important;
+    }
+
+    .empty-state {
+        min-height: 240px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .empty-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: #f2f4f7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        margin-bottom: 18px;
+    }
+
+    .empty-state h2 {
+        margin: 0;
+        font-size: 20px;
+        color: #111827;
+        font-weight: 500;
+    }
+
+    .empty-state p {
+        margin: 14px 0 26px 0;
+        color: #667085;
+        font-size: 17px;
+    }
+
+    .empty-button {
+        background: #050516;
+        color: white;
+        padding: 10px 18px;
+        border-radius: 7px;
+        text-decoration: none;
+        font-size: 15px;
+    }
+</style>
+
+{% endblock %}

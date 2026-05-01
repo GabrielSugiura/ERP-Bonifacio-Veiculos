@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="modal-overlay">
+
+    <div class="sale-modal">
+
+        <div class="modal-header">
+            <h1>Registrar Nova Venda</h1>
+
+            <a href="{% url 'sold_cars_list' %}" class="close-button">
+                ×
+            </a>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="field full">
+                <label>Carro *</label>
+                {{ form.car }}
+            </div>
+
+            <div class="two-columns">
+                <div class="field">
+                    <label>Data da Venda *</label>
+                    {{ form.sale_date }}
+                </div>
+
+                <div class="field">
+                    <label>Valor da Venda (R$) *</label>
+                    {{ form.sale_price }}
+                </div>
+            </div>
+
+            <div class="field full">
+                <label>Forma de Pagamento</label>
+                {{ form.payment_method }}
+            </div>
+
+            <div class="field full">
+                <label>Tipo de Comprador *</label>
+
+                <div class="buyer-type">
+                    {% for radio in form.buyer_type %}
+                        <label class="buyer-option">
+                            {{ radio.tag }}
+                            <span>{{ radio.choice_label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="field full">
+                <label>Nome Completo</label>
+                {{ form.buyer_name }}
+            </div>
+
+            <div class="two-columns">
+                <div class="field">
+                    <label>CPF</label>
+                    {{ form.cpf }}
+                </div>
+
+                <div class="field">
+                    <label>RG</label>
+                    {{ form.rg }}
+                </div>
+            </div>
+
+            <div class="field full">
+                <label>Endereço</label>
+                {{ form.address }}
+            </div>
+
+            <div class="two-columns">
+                <div class="field">
+                    <label>Telefone</label>
+                    {{ form.phone }}
+                </div>
+
+                <div class="field">
+                    <label>E-mail</label>
+                    {{ form.email }}
+                </div>
+            </div>
+
+            <div class="field full">
+                <label>Observações</label>
+                {{ form.observations }}
+            </div>
+
+            <div class="modal-actions">
+                <button type="submit" class="primary-button">
+                    Registrar Venda
+                </button>
+
+                <a href="{% url 'sold_cars_list' %}" class="secondary-button">
+                    Cancelar
+                </a>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        padding: 32px;
+        box-sizing: border-box;
+    }
+
+    .sale-modal {
+        width: 512px;
+        max-width: 100%;
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 20px 24px 24px 24px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+        box-sizing: border-box;
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+    }
+
+    .modal-header h1 {
+        margin: 0;
+        font-size: 21px;
+        font-weight: 800;
+        color: #111827;
+    }
+
+    .close-button {
+        color: #555;
+        font-size: 24px;
+        text-decoration: none;
+        line-height: 1;
+    }
+
+    .field {
+        margin-bottom: 14px;
+    }
+
+    .field label {
+        display: block;
+        font-size: 14px;
+        color: #111827;
+        margin-bottom: 4px;
+    }
+
+    .two-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    input,
+    select,
+    textarea {
+        width: 100%;
+        border: none;
+        background: #f0f0f2;
+        border-radius: 8px;
+        padding: 0 12px;
+        font-size: 15px;
+        color: #111827;
+        box-sizing: border-box;
+        outline: none;
+        font-family: Arial, sans-serif;
+    }
+
+    input,
+    select {
+        height: 36px;
+    }
+
+    textarea {
+        min-height: 78px;
+        padding-top: 10px;
+        resize: vertical;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: #71717a;
+    }
+
+    .buyer-type {
+        background: #e9e9ee;
+        border-radius: 14px;
+        padding: 4px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .buyer-option {
+        height: 28px;
+        border-radius: 12px;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        margin: 0 !important;
+        cursor: pointer;
+        font-size: 14px;
+        color: #111827;
+    }
+
+    .buyer-option input {
+        display: none;
+    }
+
+    .buyer-option:has(input:checked) {
+        background: #ffffff;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .modal-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 24px;
+    }
+
+    .primary-button {
+        height: 36px;
+        background: #050516;
+        color: white;
+        border: none;
+        border-radius: 7px;
+        font-size: 15px;
+        cursor: pointer;
+    }
+
+    .secondary-button {
+        height: 36px;
+        border: 1px solid #e5e7eb;
+        border-radius: 7px;
+        color: #111827;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        font-size: 15px;
+    }
+
+    @media (max-width: 650px) {
+        .modal-overlay {
+            align-items: flex-start;
+            padding: 16px;
+        }
+
+        .two-columns {
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+
+        .sale-modal {
+            width: 100%;
+        }
+    }
+</style>
+
+{% endblock %}

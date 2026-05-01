@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div style="margin-bottom:32px;">
+    <h1 style="
+        margin:0;
+        font-size:32px;
+        font-weight:800;
+        color:#111827;
+        letter-spacing:-0.5px;
+    ">
+        Dashboard
+    </h1>
+
+    <p style="
+        margin:6px 0 0 0;
+        color:#667085;
+        font-size:16px;
+    ">
+        Visão geral do seu negócio
+    </p>
+</div>
+
+<div style="
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:24px;
+    margin-bottom:32px;
+">
+
+    <div style="
+        background:#ffffff;
+        border:1px solid #e5e7eb;
+        border-radius:14px;
+        padding:24px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+    ">
+        <div>
+            <p style="margin:0 0 10px 0; color:#667085; font-size:15px;">
+                Carros à Venda
+            </p>
+            <h2 style="margin:0; font-size:26px; color:#111827;">
+                {{ carros_venda }}
+            </h2>
+        </div>
+
+        <div style="
+            width:48px;
+            height:48px;
+            border-radius:10px;
+            background:#eff6ff;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#2563eb;
+            font-size:24px;
+        ">
+            🚙
+        </div>
+    </div>
+
+    <div style="
+        background:#ffffff;
+        border:1px solid #e5e7eb;
+        border-radius:14px;
+        padding:24px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+    ">
+        <div>
+            <p style="margin:0 0 10px 0; color:#667085; font-size:15px;">
+                Carros Vendidos
+            </p>
+            <h2 style="margin:0; font-size:26px; color:#111827;">
+                {{ carros_vendidos }}
+            </h2>
+        </div>
+
+        <div style="
+            width:48px;
+            height:48px;
+            border-radius:10px;
+            background:#ecfdf3;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#16a34a;
+            font-size:24px;
+        ">
+            🛒
+        </div>
+    </div>
+
+    <div style="
+        background:#ffffff;
+        border:1px solid #e5e7eb;
+        border-radius:14px;
+        padding:24px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+    ">
+        <div>
+            <p style="margin:0 0 10px 0; color:#667085; font-size:15px;">
+                Total Investido
+            </p>
+            <h2 style="margin:0; font-size:26px; color:#111827;">
+                R$ {{ total_investido }}
+            </h2>
+        </div>
+
+        <div style="
+            width:48px;
+            height:48px;
+            border-radius:10px;
+            background:#faf5ff;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#9333ea;
+            font-size:24px;
+        ">
+            $
+        </div>
+    </div>
+
+    <div style="
+        background:#ffffff;
+        border:1px solid #e5e7eb;
+        border-radius:14px;
+        padding:24px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+    ">
+        <div>
+            <p style="margin:0 0 10px 0; color:#667085; font-size:15px;">
+                Lucro Total
+            </p>
+            <h2 style="margin:0; font-size:26px; color:#111827;">
+                R$ {{ lucro_total }}
+            </h2>
+        </div>
+
+        <div style="
+            width:48px;
+            height:48px;
+            border-radius:10px;
+            background:#ecfdf3;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#059669;
+            font-size:24px;
+        ">
+            ↗
+        </div>
+    </div>
+
+</div>
+
+<div style="
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+">
+
+    <div style="
+        background:#ffffff;
+        border:1px solid #e5e7eb;
+        border-radius:14px;
+        min-height:145px;
+        padding:24px;
+    ">
+        <h3 style="
+            margin:0;
+            font-size:18px;
+            font-weight:500;
+            color:#111827;
+        ">
+            Carros Recentes
+        </h3>
+
+        {% if carros %}
+            <ul style="
+                list-style:none;
+                padding:0;
+                margin:24px 0 0 0;
+            ">
+                {% for car in carros %}
+                    <li style="
+                        padding:10px 0;
+                        border-bottom:1px solid #f1f5f9;
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        color:#111827;
+                    ">
+                        <span>{{ car.name }} - {{ car.brand }}</span>
+                        <strong>R$ {{ car.price }}</strong>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div style="
+                height:90px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:#667085;
+                font-size:15px;
+            ">
+                Nenhum carro cadastrado ainda
+            </div>
+        {% endif %}
+    </div>
+
+    <div style="
+        background:#ffffff;
+        border:1px solid #e5e7eb;
+        border-radius:14px;
+        min-height:145px;
+        padding:24px;
+    ">
+        <h3 style="
+            margin:0;
+            font-size:18px;
+            font-weight:500;
+            color:#111827;
+        ">
+            Vendas Recentes
+        </h3>
+
+        <div style="
+            height:90px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#667085;
+            font-size:15px;
+        ">
+            Nenhuma venda registrada ainda
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

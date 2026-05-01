@@ -1,0 +1,786 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<a href="{% url 'cars_list' %}" class="back-link">← Voltar</a>
+
+<h1 class="page-title">
+    {% if editing %}
+        Editar Carro
+    {% else %}
+        Adicionar Novo Carro
+    {% endif %}
+</h1>
+
+<div class="tabs">
+    <button type="button" class="tab active" data-tab="basico">Básico</button>
+    <button type="button" class="tab" data-tab="manutencao">Manutenção</button>
+    <button type="button" class="tab" data-tab="anuncios">Anúncios</button>
+    <button type="button" class="tab" data-tab="fipe">FIPE</button>
+    <button type="button" class="tab" data-tab="observacoes">Observações</button>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- ABA BÁSICO -->
+    <div class="tab-content active" id="basico">
+
+        <div class="form-grid">
+
+            <section class="card vehicle-info">
+                <h2>Informações do Veículo</h2>
+
+                <div class="field-grid">
+                    <div class="field">
+                        <label>Marca *</label>
+                        {{ form.brand }}
+                    </div>
+
+                    <div class="field">
+                        <label>Modelo *</label>
+                        {{ form.model }}
+                    </div>
+
+                    <div class="field">
+                        <label>Ano *</label>
+                        {{ form.year }}
+                    </div>
+
+                    <div class="field">
+                        <label>Placa *</label>
+                        {{ form.plate }}
+                    </div>
+
+                    <div class="field">
+                        <label>Cor</label>
+                        {{ form.color }}
+                    </div>
+
+                    <div class="field">
+                        <label>Quilometragem (km)</label>
+                        {{ form.mileage }}
+                    </div>
+
+                    <div class="field full">
+                        <label>Imagem</label>
+                        {{ form.image }}
+
+                        {% if editing and car.image %}
+                            <div class="current-image">
+                                <p>Imagem atual:</p>
+                                <img src="{{ car.image.url }}" alt="{{ car.name }}">
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+
+            <aside class="side-column">
+
+                <section class="card">
+                    <h2>Status</h2>
+                    {{ form.status }}
+                </section>
+
+                <section class="card">
+                    <h2>Sites de Publicação (Legado)</h2>
+
+                    <div class="publication-row">
+                        {{ form.publication_sites }}
+
+                        <button type="button" class="small-button">
+                            +
+                        </button>
+                    </div>
+                </section>
+
+            </aside>
+
+        </div>
+
+        <section class="card values-card">
+            <h2>Valores</h2>
+
+            <div class="values-grid">
+                <div class="field">
+                    <label>Preço de Compra (R$)</label>
+                    {{ form.purchase_price }}
+                </div>
+
+                <div class="field">
+                    <label>Preço de Venda (R$)</label>
+                    {{ form.sale_price }}
+                </div>
+
+                <button type="button" class="fipe-button-small">
+                    ▣ FIPE
+                </button>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- ABA MANUTENÇÃO -->
+    <div class="tab-content" id="manutencao">
+
+        <section class="card maintenance-card">
+            <h2>Check-list de Manutenção e Documentação</h2>
+
+            <div class="maintenance-grid-3">
+                <div class="field">
+                    <label>Precisa Limpar?</label>
+                    {{ form.needs_cleaning }}
+                </div>
+
+                <div class="field">
+                    <label>Precisa Higienizar?</label>
+                    {{ form.needs_sanitizing }}
+                </div>
+
+                <div class="field">
+                    <label>Tem Chave Reserva?</label>
+                    {{ form.has_spare_key }}
+                </div>
+
+                <div class="field">
+                    <label>Tem Cautelar?</label>
+                    {{ form.has_cautelar }}
+                </div>
+
+                <div class="field">
+                    <label>Tem Procuração?</label>
+                    {{ form.has_procuracao }}
+                </div>
+
+                <div class="field">
+                    <label>Tem CRLV?</label>
+                    {{ form.has_crlv }}
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- ABA ANÚNCIOS -->
+    <div class="tab-content" id="anuncios">
+
+        <section class="card ads-card">
+            <h2 class="ads-title">
+                <span class="check-icon">✓</span>
+                Check-list de Sites de Anúncio
+            </h2>
+
+            <div class="ads-grid">
+                <label class="checkbox-row">
+                    {{ form.ad_olx }}
+                    <span>OLX</span>
+                </label>
+
+                <label class="checkbox-row">
+                    {{ form.ad_webmotors }}
+                    <span>WebMotors</span>
+                </label>
+
+                <label class="checkbox-row">
+                    {{ form.ad_icarros }}
+                    <span>iCarros</span>
+                </label>
+
+                <label class="checkbox-row">
+                    {{ form.ad_mercado_livre }}
+                    <span>Mercado Livre</span>
+                </label>
+
+                <label class="checkbox-row">
+                    {{ form.ad_facebook }}
+                    <span>Facebook</span>
+                </label>
+
+                <label class="checkbox-row">
+                    {{ form.ad_instagram }}
+                    <span>Instagram</span>
+                </label>
+            </div>
+
+            <div class="ads-divider"></div>
+
+            <div class="field">
+                <label>Outros Sites</label>
+
+                <div class="other-sites-row">
+                    {{ form.other_ad_sites }}
+
+                    <button type="button" class="add-site-button">
+                        Adicionar
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- ABA FIPE -->
+    <div class="tab-content" id="fipe">
+
+        <section class="card fipe-card">
+            <h2 class="fipe-title">
+                <span class="fipe-icon">⌁</span>
+                Dados da Tabela FIPE
+            </h2>
+
+            <div class="field fipe-full">
+                <label>Código FIPE</label>
+                {{ form.fipe_code }}
+            </div>
+
+            <div class="fipe-grid">
+                <div class="field">
+                    <label>Preço Inicial FIPE (R$)</label>
+                    {{ form.fipe_initial_price }}
+                    <small>Preço no início do rastreamento</small>
+                </div>
+
+                <div class="field">
+                    <label>Preço Atual FIPE (R$)</label>
+                    {{ form.fipe_current_price }}
+                    <small>Preço atual na tabela FIPE</small>
+                </div>
+            </div>
+
+            <div class="fipe-result-box">
+                <span>Resultado da Desvalorização</span>
+                <strong id="fipe_result">0,00%</strong>
+            </div>
+
+            <a href="https://veiculos.fipe.org.br/" target="_blank" class="fipe-link">
+                Consultar Tabela FIPE Oficial
+            </a>
+        </section>
+
+    </div>
+
+    <!-- ABA OBSERVAÇÕES -->
+    <div class="tab-content" id="observacoes">
+
+        <section class="card observations-card">
+            <h2>Observações</h2>
+
+            {{ form.observations }}
+        </section>
+
+    </div>
+
+    <div class="actions">
+        <button type="submit" class="primary-button">
+            {% if editing %}
+                Salvar Alterações
+            {% else %}
+                Adicionar Carro
+            {% endif %}
+        </button>
+
+        <a href="{% url 'cars_list' %}" class="secondary-button">
+            Cancelar
+        </a>
+    </div>
+
+</form>
+
+<style>
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        color: #111827;
+        text-decoration: none;
+        font-size: 15px;
+        margin-bottom: 24px;
+    }
+
+    .page-title {
+        margin: 0 0 30px 0;
+        font-size: 32px;
+        font-weight: 800;
+        color: #111827;
+        letter-spacing: -0.5px;
+    }
+
+    .tabs {
+        background: #e9e9ee;
+        border-radius: 12px;
+        padding: 4px;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        margin-bottom: 32px;
+    }
+
+    .tab {
+        height: 30px;
+        border: none;
+        background: transparent;
+        border-radius: 10px;
+        font-size: 15px;
+        color: #111827;
+        cursor: pointer;
+    }
+
+    .tab.active {
+        background: #ffffff;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    .card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 24px;
+    }
+
+    .card h2 {
+        margin: 0 0 26px 0;
+        font-size: 18px;
+        font-weight: 500;
+        color: #111827;
+    }
+
+    .field-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px 16px;
+    }
+
+    .field.full {
+        grid-column: 1 / 3;
+    }
+
+    .field label {
+        display: block;
+        font-size: 14px;
+        color: #111827;
+        margin-bottom: 4px;
+    }
+
+    .side-column {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .publication-row {
+        display: flex;
+        gap: 8px;
+    }
+
+    .publication-row input {
+        flex: 1;
+    }
+
+    .small-button {
+        width: 44px;
+        height: 36px;
+        border: 1px solid #e5e7eb;
+        background: white;
+        border-radius: 8px;
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    .values-card {
+        max-width: 725px;
+        margin-bottom: 48px;
+    }
+
+    .values-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 16px;
+        align-items: end;
+    }
+
+    .fipe-button-small {
+        height: 36px;
+        padding: 0 14px;
+        border: 1px solid #e5e7eb;
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .current-image {
+        margin-top: 12px;
+    }
+
+    .current-image p {
+        margin: 0 0 8px 0;
+        color: #667085;
+        font-size: 14px;
+    }
+
+    .current-image img {
+        width: 160px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .maintenance-card {
+        margin-bottom: 48px;
+    }
+
+    .maintenance-grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 18px 16px;
+    }
+
+    .ads-card {
+        margin-bottom: 48px;
+    }
+
+    .ads-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .check-icon {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #111827;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        line-height: 1;
+    }
+
+    .ads-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px 120px;
+        margin-top: 8px;
+    }
+
+    .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 15px;
+        color: #111827;
+    }
+
+    .checkbox-row input {
+        width: 16px;
+        height: 16px;
+        padding: 0;
+        margin: 0;
+        accent-color: #050516;
+    }
+
+    .ads-divider {
+        height: 1px;
+        background: #e5e7eb;
+        margin: 26px 0 14px 0;
+    }
+
+    .other-sites-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+    }
+
+    .add-site-button {
+        height: 36px;
+        padding: 0 18px;
+        border: 1px solid #e5e7eb;
+        background: white;
+        border-radius: 8px;
+        font-size: 15px;
+        color: #111827;
+        cursor: pointer;
+    }
+
+    .fipe-card {
+        margin-bottom: 48px;
+    }
+
+    .fipe-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .fipe-icon {
+        font-size: 20px;
+        color: #111827;
+    }
+
+    .fipe-full {
+        margin-bottom: 16px;
+    }
+
+    .fipe-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 26px;
+    }
+
+    .field small {
+        display: block;
+        margin-top: 6px;
+        color: #667085;
+        font-size: 13px;
+    }
+
+    .fipe-result-box {
+        background: #f0f7ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+        padding: 18px;
+        margin-bottom: 24px;
+    }
+
+    .fipe-result-box span {
+        display: block;
+        color: #1d4ed8;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .fipe-result-box strong {
+        display: block;
+        font-size: 28px;
+        color: #111827;
+    }
+
+    .fipe-link {
+        height: 36px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        color: #111827;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        font-size: 15px;
+    }
+
+    .observations-card {
+        margin-bottom: 48px;
+    }
+
+    .observations-textarea {
+        width: 100%;
+        min-height: 220px;
+        background: #f0f0f2;
+        border: none;
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 14px;
+        color: #111827;
+        resize: vertical;
+        box-sizing: border-box;
+        outline: none;
+    }
+
+    .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 48px;
+    }
+
+    .primary-button {
+        height: 36px;
+        background: #050516;
+        color: white;
+        border: none;
+        border-radius: 7px;
+        font-size: 15px;
+        cursor: pointer;
+    }
+
+    .secondary-button {
+        height: 36px;
+        border: 1px solid #e5e7eb;
+        border-radius: 7px;
+        color: #111827;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        background: white;
+    }
+
+    input,
+    select,
+    textarea {
+        width: 100%;
+        border: none;
+        background: #f0f0f2;
+        border-radius: 8px;
+        padding: 0 12px;
+        font-size: 14px;
+        color: #111827;
+        box-sizing: border-box;
+        outline: none;
+        font-family: Arial, sans-serif;
+    }
+
+    input,
+    select {
+        height: 36px;
+    }
+
+    input[type="file"] {
+        height: auto;
+        padding: 10px 12px;
+    }
+
+    textarea {
+        min-height: 110px;
+        padding-top: 10px;
+        resize: vertical;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: #71717a;
+    }
+
+    @media (max-width: 1000px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .maintenance-grid-3 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .ads-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .values-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .fipe-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .actions {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .tabs {
+            grid-template-columns: 1fr;
+            gap: 4px;
+        }
+
+        .field-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .field.full {
+            grid-column: 1;
+        }
+
+        .maintenance-grid-3 {
+            grid-template-columns: 1fr;
+        }
+
+        .ads-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .other-sites-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    const tabs = document.querySelectorAll('.tab');
+    const contents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.tab;
+
+            tabs.forEach(item => item.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+
+            tab.classList.add('active');
+            document.getElementById(target).classList.add('active');
+        });
+    });
+
+    const fipeInitialInput = document.getElementById('fipe_initial_price');
+    const fipeCurrentInput = document.getElementById('fipe_current_price');
+    const fipeResult = document.getElementById('fipe_result');
+
+    function parseBrazilianMoney(value) {
+        if (!value) {
+            return 0;
+        }
+
+        return parseFloat(
+            value
+                .replace(/\./g, '')
+                .replace(',', '.')
+        ) || 0;
+    }
+
+    function calculateFipeDepreciation() {
+        if (!fipeInitialInput || !fipeCurrentInput || !fipeResult) {
+            return;
+        }
+
+        const initialPrice = parseBrazilianMoney(fipeInitialInput.value);
+        const currentPrice = parseBrazilianMoney(fipeCurrentInput.value);
+
+        if (currentPrice <= 0) {
+            fipeResult.textContent = '0,00%';
+            return;
+        }
+
+        const depreciation = ((initialPrice - currentPrice) / currentPrice) * 100;
+
+        fipeResult.textContent = depreciation.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }) + '%';
+    }
+
+    if (fipeInitialInput && fipeCurrentInput) {
+        fipeInitialInput.addEventListener('input', calculateFipeDepreciation);
+        fipeCurrentInput.addEventListener('input', calculateFipeDepreciation);
+        calculateFipeDepreciation();
+    }
+</script>
+
+{% endblock %}

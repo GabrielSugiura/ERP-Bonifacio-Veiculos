@@ -1,0 +1,10 @@
+<h1>Confirmar exclusão</h1>
+
+<p>Deseja deletar {{ car.name }}?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Sim</button>
+</form>
+
+<a href="{% url 'car_list' %}">Cancelar</a>
