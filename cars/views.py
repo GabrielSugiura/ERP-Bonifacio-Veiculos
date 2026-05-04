@@ -19,7 +19,16 @@ def car_update(request, pk):
     form = CarForm(request.POST or None, request.FILES or None, instance=car)
 
     if form.is_valid():
-        form.save()
+        car = form.save()
+
+        # Se o usuário editou o carro e mudou o status para vendido,
+        # criamos uma venda automaticamente se ainda não existir.
+        if car.status == 'vendido' and not car.sales.exists():
+            Sale.objects.create(
+                car=car,
+                sale_price=car.sale_price
+            )
+
         return redirect('cars_list')
 
     return render(request, 'cars/car_form.html', {
@@ -33,7 +42,15 @@ def car_delete(request, pk):
     car = get_object_or_404(Car, pk=pk)
 
     if request.method == 'POST':
-        car.delete()
+        # Se o carro já tem venda registrada, NÃO podemos apagar o carro,
+        # porque isso destruiria o histórico da venda.
+        # Então apenas garantimos que ele fique como vendido.
+        if car.sales.exists():
+            car.status = 'vendido'
+            car.save()
+        else:
+            car.delete()
+
         return redirect('cars_list')
 
     return render(request, 'cars/car_delete.html', {
@@ -41,21 +58,23 @@ def car_delete(request, pk):
     })
 
 def dashboard(request):
-    
     carros = Car.objects.all()
+    carros_venda = Car.objects.filter(status='estoque')
+    vendas = Sale.objects.all()
 
     context = {
-        'carros_venda': carros.count(),
-        'carros_vendidos': 0,
-        'total_investido': 0,
-        'lucro_total': 0,
-        'carros': carros[:5]
+        'carros_venda': carros_venda.count(),
+        'carros_vendidos': vendas.count(),
+        'total_investido': carros_venda.aggregate(Sum('purchase_price'))['purchase_price__sum'] or 0,
+        'lucro_total': vendas.aggregate(Sum('profit'))['profit__sum'] or 0,
+        'carros': carros_venda.order_by('-id')[:5],
     }
 
     return render(request, 'cars/dashboard.html', context)
+    return render(request, 'cars/dashboard.html', context)
 
 def cars_list(request):
-    cars = Car.objects.all()
+    cars = Car.objects.filter(status='estoque').order_by('-id')
     return render(request, 'cars/cars_list.html', {'cars': cars})
 
 

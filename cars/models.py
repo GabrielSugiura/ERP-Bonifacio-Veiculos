@@ -197,7 +197,7 @@ class Sale(models.Model):
 
     car = models.ForeignKey(
         Car,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='sales',
         verbose_name='Carro'
     )
