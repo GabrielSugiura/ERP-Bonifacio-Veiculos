@@ -2,10 +2,11 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Sum
-from .models import Car, Sale, VehicleDocument, VehicleDocumentImage, AppConfiguration
+from .models import Car, Sale, VehicleDocument, VehicleDocumentImage, AppConfiguration, IPVA
 from .forms import (
     CarForm,
     SaleForm,
+    IPVAForm,
     VehicleDocumentForm,
     AccessPasswordCreateForm,
     CredentialsUnlockForm,
@@ -200,6 +201,30 @@ def inventory_view(request):
     }
 
     return render(request, 'cars/inventory.html', context)
+
+def financial_view(request):
+    active_tab = request.GET.get('tab', 'ipva')
+
+    ipvas = IPVA.objects.select_related('car').all().order_by('-year', '-created_at')
+    ipva_form = IPVAForm()
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'create_ipva':
+            ipva_form = IPVAForm(request.POST)
+
+            if ipva_form.is_valid():
+                ipva_form.save()
+                return redirect('/financeiro/?tab=ipva')
+
+    context = {
+        'active_tab': active_tab,
+        'ipvas': ipvas,
+        'ipva_form': ipva_form,
+    }
+
+    return render(request, 'cars/financial.html', context)
 
 def settings_view(request):
     config = AppConfiguration.load()

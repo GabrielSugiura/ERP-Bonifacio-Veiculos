@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth.hashers import make_password, check_password
 from cryptography.fernet import Fernet
-
+from decimal import Decimal
 
 class Car(models.Model):
     STATUS_CHOICES = [
@@ -294,6 +294,80 @@ class Sale(models.Model):
 
     def __str__(self):
         return f'Venda - {self.car}'
+
+class IPVA(models.Model):
+    INSTALLMENT_CHOICES = [
+        (1, '1x'),
+        (5, '5x'),
+    ]
+
+    car = models.ForeignKey(
+        Car,
+        on_delete=models.PROTECT,
+        related_name='ipvas',
+        verbose_name='Carro'
+    )
+
+    year = models.IntegerField(
+        verbose_name='Ano'
+    )
+
+    total_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Valor Total'
+    )
+
+    installments = models.IntegerField(
+        choices=INSTALLMENT_CHOICES,
+        default=1,
+        verbose_name='Parcelas'
+    )
+
+    discount_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name='Desconto'
+    )
+
+    final_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name='Valor Final'
+    )
+
+    installment_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name='Valor da Parcela'
+    )
+
+    observations = models.TextField(
+        blank=True,
+        default='',
+        verbose_name='Observações'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.installments == 1:
+            self.discount_value = self.total_value * Decimal('0.03')
+        else:
+            self.discount_value = Decimal('0.00')
+
+        self.final_value = self.total_value - self.discount_value
+        self.installment_value = self.final_value / self.installments
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'IPVA {self.year} - {self.car}'
+
+
 class VehicleDocument(models.Model):
     DOCUMENT_TYPE_CHOICES = [
         ('crlv', 'CRLV'),

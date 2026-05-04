@@ -1,0 +1,391 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Financeiro</h1>
+        <p>Gestão financeira e documentos</p>
+    </div>
+</div>
+
+<div class="tabs">
+    <a href="{% url 'financial' %}?tab=ipva" class="{% if active_tab == 'ipva' %}active{% endif %}">▰ IPVA</a>
+    <a href="{% url 'financial' %}?tab=invoices" class="{% if active_tab == 'invoices' %}active{% endif %}">▣ Notas Fiscais</a>
+    <a href="{% url 'financial' %}?tab=contracts" class="{% if active_tab == 'contracts' %}active{% endif %}">▤ Contratos</a>
+</div>
+
+{% if active_tab == 'ipva' %}
+    <div class="actions-row">
+        <button type="button" class="primary-button" onclick="openIpvaModal()">
+            Adicionar IPVA
+        </button>
+    </div>
+
+    <section class="table-card">
+        {% if ipvas %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Carro</th>
+                        <th>Ano</th>
+                        <th>Parcelas</th>
+                        <th>Valor Original</th>
+                        <th>Desconto</th>
+                        <th>Valor Final</th>
+                        <th>Valor da Parcela</th>
+                        <th>Observações</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for ipva in ipvas %}
+                        <tr>
+                            <td>{{ ipva.car.brand }} {{ ipva.car.model }} - {{ ipva.car.plate }}</td>
+                            <td>{{ ipva.year }}</td>
+                            <td>{{ ipva.installments }}x</td>
+                            <td>R$ {{ ipva.total_value }}</td>
+                            <td>
+                                {% if ipva.discount_value > 0 %}
+                                    R$ {{ ipva.discount_value }}
+                                    <small class="discount-label">3%</small>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td><strong>R$ {{ ipva.final_value }}</strong></td>
+                            <td>R$ {{ ipva.installment_value }}</td>
+                            <td>{{ ipva.observations|default:"—" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-box">
+                <div class="empty-icon">▰</div>
+                <p>Nenhum IPVA registrado</p>
+            </div>
+        {% endif %}
+    </section>
+
+    <div id="ipva-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Registrar IPVA</h2>
+                <button type="button" onclick="closeIpvaModal()">×</button>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_ipva">
+
+                <div class="form-group">
+                    <label>Carro *</label>
+                    {{ ipva_form.car }}
+                    {{ ipva_form.car.errors }}
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Ano *</label>
+                        {{ ipva_form.year }}
+                        {{ ipva_form.year.errors }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Parcelas *</label>
+                        {{ ipva_form.installments }}
+                        {{ ipva_form.installments.errors }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Valor Total (R$) *</label>
+                    {{ ipva_form.total_value }}
+                    {{ ipva_form.total_value.errors }}
+                    <small>Se selecionar 1x, o desconto de 3% será calculado automaticamente.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Observações</label>
+                    {{ ipva_form.observations }}
+                    {{ ipva_form.observations.errors }}
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="submit-button">Registrar</button>
+                    <button type="button" class="cancel-button" onclick="closeIpvaModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% elif active_tab == 'invoices' %}
+    <div class="actions-row">
+        <button type="button" class="primary-button">Gerar Nota Fiscal</button>
+    </div>
+
+    <section class="table-card">
+        <div class="empty-box">
+            <div class="empty-icon">▣</div>
+            <p>Nenhuma nota fiscal emitida</p>
+        </div>
+    </section>
+{% elif active_tab == 'contracts' %}
+    <section class="table-card">
+        <div class="empty-box">
+            <div class="empty-icon">▤</div>
+            <p>Nenhum contrato registrado</p>
+        </div>
+    </section>
+{% endif %}
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 28px;
+    }
+
+    .page-header h1 {
+        margin: 0;
+        font-size: 32px;
+        font-weight: 800;
+        color: #111827;
+    }
+
+    .page-header p {
+        margin: 6px 0 0 0;
+        color: #667085;
+        font-size: 17px;
+    }
+
+    .tabs {
+        display: inline-flex;
+        gap: 4px;
+        background: #f3f4f6;
+        padding: 4px;
+        border-radius: 14px;
+        margin-bottom: 28px;
+    }
+
+    .tabs a {
+        text-decoration: none;
+        color: #111827;
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-size: 14px;
+    }
+
+    .tabs a.active {
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .actions-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 20px;
+    }
+
+    .primary-button {
+        background: #020617;
+        color: #ffffff;
+        border: none;
+        padding: 12px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .table-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 0;
+        overflow: hidden;
+        min-height: 150px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        text-align: left;
+        padding: 14px 16px;
+        font-size: 13px;
+        color: #667085;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    td {
+        padding: 14px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #111827;
+        font-size: 14px;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    .discount-label {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 6px;
+        border-radius: 999px;
+        background: #dcfce7;
+        color: #166534;
+        font-size: 12px;
+    }
+
+    .empty-box {
+        min-height: 150px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        color: #667085;
+    }
+
+    .empty-icon {
+        font-size: 42px;
+        color: #98a2b3;
+    }
+
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+    }
+
+    .modal-overlay.open {
+        display: flex;
+    }
+
+    .modal {
+        width: 500px;
+        max-width: calc(100vw - 32px);
+        background: #ffffff;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 18px 50px rgba(0,0,0,0.20);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        font-size: 20px;
+        color: #111827;
+    }
+
+    .modal-header button {
+        border: none;
+        background: transparent;
+        font-size: 24px;
+        cursor: pointer;
+        color: #667085;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+
+    .form-group {
+        margin-bottom: 14px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+        color: #111827;
+    }
+
+    .form-group small {
+        display: block;
+        margin-top: 6px;
+        color: #667085;
+        font-size: 12px;
+    }
+
+    .form-control,
+    .textarea-control {
+        width: 100%;
+        border: 1px solid #e5e7eb;
+        background: #f3f4f6;
+        border-radius: 8px;
+        padding: 11px 12px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .textarea-control {
+        min-height: 78px;
+        resize: vertical;
+    }
+
+    .errorlist {
+        margin: 6px 0 0 0;
+        padding-left: 18px;
+        color: #dc2626;
+        font-size: 13px;
+    }
+
+    .modal-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 12px;
+    }
+
+    .submit-button {
+        background: #020617;
+        color: #ffffff;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .cancel-button {
+        background: #ffffff;
+        color: #111827;
+        border: 1px solid #e5e7eb;
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+</style>
+
+<script>
+    function openIpvaModal() {
+        document.getElementById('ipva-modal').classList.add('open');
+    }
+
+    function closeIpvaModal() {
+        document.getElementById('ipva-modal').classList.remove('open');
+    }
+
+    {% if ipva_form.errors %}
+        openIpvaModal();
+    {% endif %}
+</script>
+
+{% endblock %}

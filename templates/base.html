@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>ERP AutoCenter</title>
+    <title>Bonifácio Veículos</title>
     <style>
         body {
             margin: 0;
@@ -82,7 +82,7 @@
 <div class="container">
 
     <aside class="sidebar">
-        <h2>ERP AutoCenter</h2>
+        <h2>Bonifácio Veículos</h2>
         <small>Gestão de Veículos</small>
 
         <nav class="menu">
@@ -101,11 +101,11 @@
                 Carros Vendidos
             </a>
 
-            <a href="#">
+            <a href="{% url 'financial' %}" class="{% if request.resolver_match.url_name == 'financial' %}active{% endif %}">
                 <span class="icon">$</span>
                 Financeiro
             </a>
-
+            
             <a href="{% url 'documentation_list' %}" class="{% if request.resolver_match.url_name == 'documentation_list' or request.resolver_match.url_name == 'document_create' %}active{% endif %}">
                 <span class="icon">📄</span>
                 Documentação

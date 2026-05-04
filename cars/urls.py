@@ -19,4 +19,5 @@ urlpatterns = [
     path('configuracoes/', views.settings_view, name='settings_view'),
     path('cars/<int:pk>/editar/', views.car_update, name='car_update'),
     path('cars/<int:pk>/excluir/', views.car_delete, name='car_delete'),
+    path('financeiro/', views.financial_view, name='financial'),
 ]

@@ -1,8 +1,7 @@
 # cars/forms.py
 
 from django import forms
-from .models import Car, Sale, VehicleDocument, VehicleDocumentImage, AppConfiguration
-
+from .models import Car, Sale, VehicleDocument, VehicleDocumentImage, AppConfiguration, IPVA
 
 class CarForm(forms.ModelForm):
     class Meta:
@@ -234,6 +233,60 @@ class SaleForm(forms.ModelForm):
 
     def clean_sale_price(self):
         value = self.cleaned_data.get('sale_price')
+
+        if value in [None, '']:
+            return 0
+
+        if isinstance(value, str):
+            value = value.replace('.', '').replace(',', '.')
+
+        return value
+
+
+class IPVAForm(forms.ModelForm):
+    class Meta:
+        model = IPVA
+        fields = [
+            'car',
+            'year',
+            'installments',
+            'total_value',
+            'observations',
+        ]
+
+        widgets = {
+            'car': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+
+            'year': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': '2026'
+            }),
+
+            'installments': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+
+            'total_value': forms.TextInput(attrs={
+                'class': 'form-control money-input',
+                'placeholder': '1200,00'
+            }),
+
+            'observations': forms.Textarea(attrs={
+                'class': 'form-control textarea-control',
+                'placeholder': 'Observações sobre o IPVA...'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['car'].queryset = Car.objects.all().order_by('brand', 'model')
+        self.fields['car'].empty_label = 'Selecione o carro'
+
+    def clean_total_value(self):
+        value = self.cleaned_data.get('total_value')
 
         if value in [None, '']:
             return 0
