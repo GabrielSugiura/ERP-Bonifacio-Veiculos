@@ -1,12 +1,28 @@
 # cars/views.py
 
+from django.core.files.base import ContentFile
+from docx import Document
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Sum
-from .models import Car, Sale, VehicleDocument, VehicleDocumentImage, AppConfiguration
+from .models import (
+    Car,
+    Sale,
+    VehicleDocument,
+    VehicleDocumentImage,
+    AppConfiguration,
+    IPVA,
+    Contract,
+    ContractImage,
+    InvoiceDocument,
+)
+
 from .forms import (
     CarForm,
     SaleForm,
+    IPVAForm,
+    InvoiceDocumentForm,
     VehicleDocumentForm,
+    ContractForm,
     AccessPasswordCreateForm,
     CredentialsUnlockForm,
     ItauCredentialsForm,
@@ -19,7 +35,16 @@ def car_update(request, pk):
     form = CarForm(request.POST or None, request.FILES or None, instance=car)
 
     if form.is_valid():
-        form.save()
+        car = form.save()
+
+        # Se o usuário editou o carro e mudou o status para vendido,
+        # criamos uma venda automaticamente se ainda não existir.
+        if car.status == 'vendido' and not car.sales.exists():
+            Sale.objects.create(
+                car=car,
+                sale_price=car.sale_price
+            )
+
         return redirect('cars_list')
 
     return render(request, 'cars/car_form.html', {
@@ -33,7 +58,15 @@ def car_delete(request, pk):
     car = get_object_or_404(Car, pk=pk)
 
     if request.method == 'POST':
-        car.delete()
+        # Se o carro já tem venda registrada, NÃO podemos apagar o carro,
+        # porque isso destruiria o histórico da venda.
+        # Então apenas garantimos que ele fique como vendido.
+        if car.sales.exists():
+            car.status = 'vendido'
+            car.save()
+        else:
+            car.delete()
+
         return redirect('cars_list')
 
     return render(request, 'cars/car_delete.html', {
@@ -41,21 +74,29 @@ def car_delete(request, pk):
     })
 
 def dashboard(request):
-    
-    carros = Car.objects.all()
+    carros_estoque = Car.objects.filter(
+        status='estoque',
+        sales__isnull=True
+    ).distinct()
+
+    vendas = Sale.objects.select_related('car').all()
 
     context = {
-        'carros_venda': carros.count(),
-        'carros_vendidos': 0,
-        'total_investido': 0,
-        'lucro_total': 0,
-        'carros': carros[:5]
+        'carros_venda': carros_estoque.count(),
+        'carros_vendidos': vendas.count(),
+        'total_investido': carros_estoque.aggregate(Sum('purchase_price'))['purchase_price__sum'] or 0,
+        'lucro_total': vendas.aggregate(Sum('profit'))['profit__sum'] or 0,
+        'carros': carros_estoque.order_by('-id')[:5],
     }
 
     return render(request, 'cars/dashboard.html', context)
 
 def cars_list(request):
-    cars = Car.objects.all()
+    cars = Car.objects.filter(
+        status='estoque',
+        sales__isnull=True
+    ).distinct().order_by('-id')
+
     return render(request, 'cars/cars_list.html', {'cars': cars})
 
 
@@ -63,10 +104,15 @@ def car_create(request):
     form = CarForm(request.POST or None, request.FILES or None)
 
     if form.is_valid():
-        form.save()
+        car = form.save(commit=False)
+        car.status = 'estoque'
+        car.save()
         return redirect('cars_list')
 
-    return render(request, 'cars/car_form.html', {'form': form})
+    return render(request, 'cars/car_form.html', {
+        'form': form,
+        'editing': False,
+    })
 
 def sold_cars_list(request):
     query = request.GET.get('q', '')
@@ -140,17 +186,23 @@ def document_create(request):
 
         return redirect('documentation_list')
 
-    return render(request, 'cars/document_form.html', {'form': form})
+    return render(request, 'cars/document_form.html', {
+        'form': form,
+    })
 
 def inventory_view(request):
     cars = Car.objects.all().order_by('-id')
 
-    cars_in_stock = cars.filter(status='estoque')
-    cars_for_sale = cars.filter(status='estoque')
+    cars_in_stock = Car.objects.filter(
+        status='estoque',
+        sales__isnull=True
+    ).distinct().order_by('-id')
 
-    total_inventory = cars.count()
-    total_investment = cars.aggregate(Sum('purchase_price'))['purchase_price__sum'] or 0
-    estimated_value = cars.aggregate(Sum('fipe_current_price'))['fipe_current_price__sum'] or 0
+    cars_for_sale = cars_in_stock
+
+    total_inventory = cars_in_stock.count()
+    total_investment = cars_in_stock.aggregate(Sum('purchase_price'))['purchase_price__sum'] or 0
+    estimated_value = cars_in_stock.aggregate(Sum('fipe_current_price'))['fipe_current_price__sum'] or 0
 
     estimated_margin = estimated_value - total_investment
 
@@ -160,7 +212,7 @@ def inventory_view(request):
         margin_percentage = 0
 
     context = {
-        'cars': cars,
+        'cars': cars_in_stock,
         'cars_in_stock': cars_in_stock,
         'cars_for_sale': cars_for_sale,
         'total_inventory': total_inventory,
@@ -171,6 +223,146 @@ def inventory_view(request):
     }
 
     return render(request, 'cars/inventory.html', context)
+
+def financial_view(request):
+    active_tab = request.GET.get('tab', 'ipva')
+
+    # IPVA
+    ipvas = IPVA.objects.select_related('car').all().order_by('-year', '-created_at')
+    ipva_form = IPVAForm()
+
+    # Contratos
+    selected_car = request.GET.get('car', '')
+    cars = Car.objects.all().order_by('brand', 'model', 'year')
+
+    contracts = Contract.objects.select_related('car').prefetch_related('images').all().order_by('-created_at')
+
+    if selected_car:
+        contracts = contracts.filter(car_id=selected_car)
+
+    contract_form = ContractForm()
+
+    # Notas fiscais
+    invoice_selected_car = request.GET.get('invoice_car', '')
+
+    invoice_documents = InvoiceDocument.objects.select_related('car').all().order_by('-created_at')
+
+    if invoice_selected_car:
+        invoice_documents = invoice_documents.filter(car_id=invoice_selected_car)
+
+    invoice_form = InvoiceDocumentForm()
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'create_ipva':
+            active_tab = 'ipva'
+            ipva_form = IPVAForm(request.POST)
+
+            if ipva_form.is_valid():
+                ipva_form.save()
+                return redirect('/financeiro/?tab=ipva')
+
+        elif action == 'create_contract':
+            active_tab = 'contracts'
+            contract_form = ContractForm(request.POST, request.FILES)
+
+            if contract_form.is_valid():
+                contract = contract_form.save()
+
+                for image in request.FILES.getlist('images'):
+                    ContractImage.objects.create(
+                        contract=contract,
+                        image=image
+                    )
+
+                return redirect('/financeiro/?tab=contracts')
+
+        elif action == 'create_invoice':
+            active_tab = 'invoices'
+            invoice_form = InvoiceDocumentForm(request.POST, request.FILES)
+
+            if invoice_form.is_valid():
+                car = invoice_form.cleaned_data['car']
+                title = invoice_form.cleaned_data['title']
+                typed_text = invoice_form.cleaned_data.get('typed_text')
+                uploaded_docx = invoice_form.cleaned_data.get('uploaded_docx')
+
+                invoice = InvoiceDocument(
+                    car=car,
+                    title=title,
+                )
+
+                if uploaded_docx:
+                    invoice.file_type = 'docx'
+                    invoice.file = uploaded_docx
+                    invoice.save()
+                else:
+                    invoice.file_type = 'txt'
+                    invoice.text_content = typed_text
+                    invoice.save()
+
+                    filename = f'nota_fiscal_{invoice.id}.txt'
+                    invoice.file.save(
+                        filename,
+                        ContentFile(typed_text.encode('utf-8')),
+                        save=True
+                    )
+
+                return redirect('/financeiro/?tab=invoices')
+
+    context = {
+        'active_tab': active_tab,
+
+        # IPVA
+        'ipvas': ipvas,
+        'ipva_form': ipva_form,
+
+        # Contratos
+        'cars': cars,
+        'contracts': contracts,
+        'contract_form': contract_form,
+        'selected_car': selected_car,
+
+        # Notas fiscais
+        'invoice_documents': invoice_documents,
+        'invoice_form': invoice_form,
+        'invoice_selected_car': invoice_selected_car,
+    }
+
+    return render(request, 'cars/financial.html', context)
+
+
+def invoice_document_detail(request, pk):
+    invoice = get_object_or_404(InvoiceDocument, pk=pk)
+
+    readable_content = ''
+
+    if invoice.file_type == 'txt':
+        if invoice.text_content:
+            readable_content = invoice.text_content
+        elif invoice.file:
+            with invoice.file.open('rb') as f:
+                readable_content = f.read().decode('utf-8', errors='replace')
+
+    elif invoice.file_type == 'docx':
+        if invoice.file:
+            document = Document(invoice.file.path)
+
+            paragraphs = []
+
+            for paragraph in document.paragraphs:
+                text = paragraph.text.strip()
+
+                if text:
+                    paragraphs.append(text)
+
+            readable_content = '\n\n'.join(paragraphs)
+
+    return render(request, 'cars/invoice_document_detail.html', {
+        'invoice': invoice,
+        'readable_content': readable_content,
+    })
 
 def settings_view(request):
     config = AppConfiguration.load()

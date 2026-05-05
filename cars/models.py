@@ -1,11 +1,12 @@
 # cars/models.py
 
+from decimal import Decimal
 from django.db import models
 from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth.hashers import make_password, check_password
 from cryptography.fernet import Fernet
-
+import os
 
 class Car(models.Model):
     STATUS_CHOICES = [
@@ -155,18 +156,42 @@ class Car(models.Model):
     )
 
     # Aba Anúncios
-    ad_olx = models.BooleanField(default=False, verbose_name='OLX')
-    ad_webmotors = models.BooleanField(default=False, verbose_name='WebMotors')
-    ad_icarros = models.BooleanField(default=False, verbose_name='iCarros')
-    ad_mercado_livre = models.BooleanField(default=False, verbose_name='Mercado Livre')
-    ad_facebook = models.BooleanField(default=False, verbose_name='Facebook')
-    ad_instagram = models.BooleanField(default=False, verbose_name='Instagram')
+    ad_olx = models.BooleanField(
+        default=False,
+        verbose_name='OLX'
+    )
+
+    ad_webmotors = models.BooleanField(
+        default=False,
+        verbose_name='WebMotors'
+    )
+
+    ad_icarros = models.BooleanField(
+        default=False,
+        verbose_name='iCarros'
+    )
+
+    ad_mercado_livre = models.BooleanField(
+        default=False,
+        verbose_name='Mercado Livre'
+    )
+
+    ad_facebook = models.BooleanField(
+        default=False,
+        verbose_name='Facebook'
+    )
+
+    ad_instagram = models.BooleanField(
+        default=False,
+        verbose_name='Instagram'
+    )
 
     other_ad_sites = models.CharField(
-    max_length=255,
-    blank=True,
-    default='',
-    verbose_name='Outros Sites')
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name='Outros Sites'
+    )
 
     # Aba Observações
     observations = models.TextField(
@@ -175,7 +200,10 @@ class Car(models.Model):
         verbose_name='Observações'
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Criado em'
+    )
 
     def __str__(self):
         return f'{self.brand} {self.model} - {self.year}'
@@ -197,7 +225,7 @@ class Sale(models.Model):
 
     car = models.ForeignKey(
         Car,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='sales',
         verbose_name='Carro'
     )
@@ -282,19 +310,27 @@ class Sale(models.Model):
         verbose_name='Lucro'
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Criado em'
+    )
 
     def save(self, *args, **kwargs):
         self.profit = self.sale_price - self.car.purchase_price
+
         self.car.status = 'vendido'
-        self.car.save()
+        self.car.save(update_fields=['status'])
+
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f'Venda - {self.car}'
+
+
 class VehicleDocument(models.Model):
     DOCUMENT_TYPE_CHOICES = [
         ('crlv', 'CRLV'),
+        ('dut', 'DUT'),
         ('nota_fiscal', 'Nota Fiscal'),
         ('recibo', 'Recibo'),
         ('contrato', 'Contrato'),
@@ -305,7 +341,7 @@ class VehicleDocument(models.Model):
 
     car = models.ForeignKey(
         Car,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='documents',
         verbose_name='Carro'
     )
@@ -327,7 +363,10 @@ class VehicleDocument(models.Model):
         verbose_name='Observações'
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Criado em'
+    )
 
     def __str__(self):
         return f'{self.name} - {self.car}'
@@ -337,7 +376,8 @@ class VehicleDocumentImage(models.Model):
     document = models.ForeignKey(
         VehicleDocument,
         on_delete=models.CASCADE,
-        related_name='images'
+        related_name='images',
+        verbose_name='Documento'
     )
 
     image = models.ImageField(
@@ -345,13 +385,203 @@ class VehicleDocumentImage(models.Model):
         verbose_name='Imagem'
     )
 
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Enviado em'
+    )
 
     def __str__(self):
         return f'Imagem de {self.document.name}'
 
+
+class IPVA(models.Model):
+    INSTALLMENT_CHOICES = [
+        (1, '1x'),
+        (5, '5x'),
+    ]
+
+    car = models.ForeignKey(
+        Car,
+        on_delete=models.PROTECT,
+        related_name='ipvas',
+        verbose_name='Carro'
+    )
+
+    year = models.IntegerField(
+        verbose_name='Ano'
+    )
+
+    total_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Valor Total'
+    )
+
+    installments = models.IntegerField(
+        choices=INSTALLMENT_CHOICES,
+        default=1,
+        verbose_name='Parcelas'
+    )
+
+    discount_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name='Desconto'
+    )
+
+    final_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name='Valor Final'
+    )
+
+    installment_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name='Valor da Parcela'
+    )
+
+    observations = models.TextField(
+        blank=True,
+        default='',
+        verbose_name='Observações'
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Criado em'
+    )
+
+    def save(self, *args, **kwargs):
+        if self.installments == 1:
+            self.discount_value = self.total_value * Decimal('0.03')
+        else:
+            self.discount_value = Decimal('0.00')
+
+        self.final_value = self.total_value - self.discount_value
+        self.installment_value = self.final_value / self.installments
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'IPVA {self.year} - {self.car}'
+
+
+class Contract(models.Model):
+    car = models.ForeignKey(
+        Car,
+        on_delete=models.PROTECT,
+        related_name='contracts',
+        verbose_name='Carro'
+    )
+
+    name = models.CharField(
+        max_length=120,
+        verbose_name='Nome do Contrato'
+    )
+
+    notes = models.TextField(
+        blank=True,
+        default='',
+        verbose_name='Observações'
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Criado em'
+    )
+
+    def __str__(self):
+        return f'{self.name} - {self.car}'
+
+
+class ContractImage(models.Model):
+    contract = models.ForeignKey(
+        Contract,
+        on_delete=models.CASCADE,
+        related_name='images',
+        verbose_name='Contrato'
+    )
+
+    image = models.ImageField(
+        upload_to='contracts/',
+        verbose_name='Imagem'
+    )
+
+    uploaded_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Enviado em'
+    )
+
+    def __str__(self):
+        return f'Imagem de {self.contract.name}'
+
+class InvoiceDocument(models.Model):
+    FILE_TYPE_CHOICES = [
+        ('txt', 'Texto digitado'),
+        ('docx', 'Arquivo DOCX'),
+    ]
+
+    car = models.ForeignKey(
+        Car,
+        on_delete=models.PROTECT,
+        related_name='invoice_documents',
+        verbose_name='Carro'
+    )
+
+    title = models.CharField(
+        max_length=120,
+        verbose_name='Título'
+    )
+
+    file_type = models.CharField(
+        max_length=10,
+        choices=FILE_TYPE_CHOICES,
+        verbose_name='Tipo de Arquivo'
+    )
+
+    text_content = models.TextField(
+        blank=True,
+        default='',
+        verbose_name='Texto da Nota'
+    )
+
+    file = models.FileField(
+        upload_to='invoices/',
+        blank=True,
+        null=True,
+        verbose_name='Arquivo'
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Criado em'
+    )
+
+    def __str__(self):
+        return f'{self.title} - {self.car}'
+
+    def filename(self):
+        if self.file:
+            return os.path.basename(self.file.name)
+
+        return f'{self.title}.txt'
+
+
 def get_credentials_fernet():
-    return Fernet(settings.CREDENTIALS_ENCRYPTION_KEY.encode())
+    key = getattr(settings, 'CREDENTIALS_ENCRYPTION_KEY', '')
+
+    if not key or key == 'COLE_SUA_CHAVE_GERADA_AQUI':
+        raise ValueError(
+            'CREDENTIALS_ENCRYPTION_KEY não foi configurada corretamente. '
+            'Gere uma chave com: '
+            'from cryptography.fernet import Fernet; Fernet.generate_key().decode()'
+        )
+
+    return Fernet(key.encode())
 
 
 class AppConfiguration(models.Model):
@@ -374,8 +604,15 @@ class AppConfiguration(models.Model):
         verbose_name='Senha Itaú Criptografada'
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Criado em'
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Atualizado em'
+    )
 
     @classmethod
     def load(cls):

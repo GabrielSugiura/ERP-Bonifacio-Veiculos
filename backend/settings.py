@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
-
 from pathlib import Path
 import os
 
@@ -76,7 +75,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 CREDENTIALS_ENCRYPTION_KEY = os.environ.get(
     'CREDENTIALS_ENCRYPTION_KEY',
-    'COLE_SUA_CHAVE_GERADA_AQUI'
+    'Imvke469tHTnIMRhHRG8TEOd29KtyixqhkS5dXuZG70='
 )
 
 # Database
