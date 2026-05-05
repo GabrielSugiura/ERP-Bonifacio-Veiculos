@@ -45,12 +45,12 @@ if errorlevel 1 (
     exit /b 1
 )
 
+
+echo.
+echo Iniciando servidor...
+start ..\python\python.exe manage.py runserver 127.0.0.1:8000
+
 echo.
 echo Abrindo navegador...
 start "" "http://127.0.0.1:8000/"
 
-echo.
-echo Iniciando servidor...
-..\python\python.exe manage.py runserver 127.0.0.1:8000
-
-pause
